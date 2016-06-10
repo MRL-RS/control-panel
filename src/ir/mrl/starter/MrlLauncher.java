@@ -93,7 +93,7 @@ public class MrlLauncher extends JFrame implements WindowListener {
     private String defShowKernelString = "showKernel";
     private String defMapAddress = "map address";
     private boolean defAutoRunAgentSelected = false;
-    private String defHostAddress = "localhost";
+    private String defHostAddress = "127.0.0.1";
     private String defPortAddress = "7000";
     private boolean defMultipleRun = false;
     private int defRunNo = 1;
@@ -144,7 +144,7 @@ public class MrlLauncher extends JFrame implements WindowListener {
         for (String arg : agentArgs) {
             script += " " + arg;
         }
-        script += " -UNKNOWN_BUG";
+        System.out.println("############Script to run: " + script);
         Process proc = Runtime.getRuntime().exec(script);
 
 
@@ -1253,7 +1253,7 @@ public class MrlLauncher extends JFrame implements WindowListener {
                 stepButton.setEnabled(true);
                 startAgentsButton.setEnabled(true);
             }
-            System.out.println("Kernel is ready ;)");
+            System.out.println("Kernel is ready.");
 //            mainTabbedPane.setSelectedIndex(2);
         }
     }
@@ -1312,29 +1312,29 @@ public class MrlLauncher extends JFrame implements WindowListener {
             if (address == null) {
                 return;
             }
-            arguments.add("-h");
-            arguments.add(hostField != null ? hostField : "localhost");
-            arguments.add("-p");
-            arguments.add(portField != null ? portField : "7000");
-            arguments.add("-at");
-            arguments.add(atField != null ? atField : "-1");
-            arguments.add("-ac");
-            arguments.add(acField != null ? acField : "-1");
-            arguments.add("-fb");
+//            arguments.add("-fb");
             arguments.add(fbField != null ? fbField : "-1");
-            arguments.add("-fs");
+//            arguments.add("-fs");
             arguments.add(fsField != null ? fsField : "-1");
-            arguments.add("-pf");
+//            arguments.add("-pf");
             arguments.add(pfField != null ? pfField : "-1");
-            arguments.add("-po");
+//            arguments.add("-po");
             arguments.add(poField != null ? poField : "-1");
+//            arguments.add("-at");
+            arguments.add(atField != null ? atField : "-1");
+//            arguments.add("-ac");
+            arguments.add(acField != null ? acField : "-1");
+//            arguments.add("-h");
+            arguments.add(hostField != null ? hostField : defHostAddress);
+//            arguments.add("-p");
+//            arguments.add(portField != null ? portField : "7000");
             boolean precompute = preComputeCheckBox.isSelected();
-            if (precompute) {
-                arguments.add("-precompute");
-            }
-            if (onThreadCheckBox.isSelected()) {
-                arguments.add("-thr");
-            }
+//            if (precompute) {
+//                arguments.add("-precompute");
+//            }
+//            if (onThreadCheckBox.isSelected()) {
+//                arguments.add("-thr");
+//            }
 
             String otherArgs = agentParamsTextField.getText();
             if (otherArgs.length() > 0) {
@@ -1344,7 +1344,7 @@ public class MrlLauncher extends JFrame implements WindowListener {
 
             String[] agentArgs = new String[arguments.size()];
             agentArgs = arguments.toArray(agentArgs);
-            //-h localhost -p 7000
+            //-h 127.0.0.1 -p 7000
             try {
                 // launch agents
                 launchAgents(agentArgs, precompute);
