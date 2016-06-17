@@ -7,6 +7,7 @@
     <groupId>ir.mrl.panel</groupId>
     <artifactId>control-panel</artifactId>
     <version>1.0</version>
+<!--
 
     <properties>
         <slf4j.version>1.7.12</slf4j.version>
@@ -25,25 +26,25 @@
             <artifactId>visual-debugger</artifactId>
             <version>1.0</version>
         </dependency>
-        <!-- http://mvnrepository.com/artifact/dom4j/dom4j -->
+        &lt;!&ndash; http://mvnrepository.com/artifact/dom4j/dom4j &ndash;&gt;
         <dependency>
             <groupId>dom4j</groupId>
             <artifactId>dom4j</artifactId>
             <version>1.6.1</version>
         </dependency>
-        <!-- http://mvnrepository.com/artifact/jfree/jfreechart -->
+        &lt;!&ndash; http://mvnrepository.com/artifact/jfree/jfreechart &ndash;&gt;
         <dependency>
             <groupId>jfree</groupId>
             <artifactId>jfreechart</artifactId>
             <version>1.0.13</version>
         </dependency>
-        <!-- http://mvnrepository.com/artifact/jaxen/jaxen -->
+        &lt;!&ndash; http://mvnrepository.com/artifact/jaxen/jaxen &ndash;&gt;
         <dependency>
             <groupId>jaxen</groupId>
             <artifactId>jaxen</artifactId>
             <version>1.1.6</version>
         </dependency>
-        <!-- http://mvnrepository.com/artifact/commons-logging/commons-logging -->
+        &lt;!&ndash; http://mvnrepository.com/artifact/commons-logging/commons-logging &ndash;&gt;
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
@@ -75,7 +76,7 @@
             <version>${slf4j.version}</version>
         </dependency>
 
-        <!-- http://mvnrepository.com/artifact/trove/trove -->
+        &lt;!&ndash; http://mvnrepository.com/artifact/trove/trove &ndash;&gt;
         <dependency>
             <groupId>trove</groupId>
             <artifactId>trove</artifactId>
@@ -88,7 +89,7 @@
             <version>1.0</version>
         </dependency>
 
-        <!-- Rescuecore dependencies -->
+        &lt;!&ndash; Rescuecore dependencies &ndash;&gt;
 
         <dependency>
             <groupId>com.rescuecore</groupId>
@@ -435,22 +436,6 @@
                 </executions>
             </plugin>
 
-            <!--<plugin>-->
-            <!--<groupId>org.apache.maven.plugins</groupId>-->
-            <!--<artifactId>maven-jar-plugin</artifactId>-->
-            <!--<version>${maven.jar.plugin.version}</version>-->
-            <!--<configuration>-->
-            <!--&lt;!&ndash; DO NOT include log4j.properties file in your Jar &ndash;&gt;-->
-            <!--<excludes>-->
-            <!--<exclude>**/log4j.properties</exclude>-->
-            <!--</excludes>-->
-            <!--<archive>-->
-            <!--<manifest>-->
-            <!--<mainClass>com.mrl.debugger.LaunchMRLViewer</mainClass>-->
-            <!--</manifest>-->
-            <!--</archive>-->
-            <!--</configuration>-->
-            <!--</plugin>-->
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
@@ -460,27 +445,27 @@
                 </configuration>
             </plugin>
 
-            <!-- Maven Assembly Plugin -->
+            &lt;!&ndash; Maven Assembly Plugin &ndash;&gt;
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>${maven-assembly-plugin.version}</version>
                 <configuration>
-                    <!-- get all project dependencies -->
+                    &lt;!&ndash; get all project dependencies &ndash;&gt;
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <!-- MainClass in mainfest make a executable jar -->
+                    &lt;!&ndash; MainClass in mainfest make a executable jar &ndash;&gt;
                     <archive>
                         <manifest>
-                            <mainClass>com.mrl.debugger.LaunchMRLViewer</mainClass>
+                            <mainClass>ir.mrl.starter.MrlLauncher</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
                 <executions>
                     <execution>
                         <id>make-assembly</id>
-                        <!-- bind to the packaging phase -->
+                        &lt;!&ndash; bind to the packaging phase &ndash;&gt;
                         <phase>package</phase>
                         <goals>
                             <goal>single</goal>
@@ -490,5 +475,6 @@
             </plugin>
         </plugins>
     </build>
+-->
 
 </project>
