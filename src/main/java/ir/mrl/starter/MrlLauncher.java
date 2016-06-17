@@ -11,9 +11,11 @@ import maps.MapException;
 import org.dom4j.DocumentException;
 import rescuecore2.Constants;
 import rescuecore2.GUIComponent;
+import rescuecore2.components.ComponentConnectionException;
 import rescuecore2.components.ComponentLauncher;
 import rescuecore2.components.TCPComponentLauncher;
 import rescuecore2.config.*;
+import rescuecore2.connection.ConnectionException;
 import rescuecore2.log.LogException;
 import rescuecore2.misc.CommandLineOptions;
 import rescuecore2.registry.EntityFactory;
@@ -35,6 +37,7 @@ import java.util.List;
 import static rescuecore2.misc.java.JavaTools.instantiateFactory;
 
 /**
+ * @author Mostafa
  * @author Mahdi
  */
 public class MrlLauncher extends JFrame implements WindowListener {
@@ -1155,7 +1158,7 @@ public class MrlLauncher extends JFrame implements WindowListener {
         JFileChooser chooser = new JFileChooser();
         String address = getMapAddress(false);
         if (address != null) {
-            chooser.setCurrentDirectory(new File(address +File.separator +  "config"));
+            chooser.setCurrentDirectory(new File(address + File.separator + "config"));
         }
         if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             saveFile = chooser.getSelectedFile();
@@ -1178,7 +1181,7 @@ public class MrlLauncher extends JFrame implements WindowListener {
         String address = getMapAddress(false);
 
         if (address != null) {
-            File mainFolder = new File(address + File.separator + "config"+File.separator);
+            File mainFolder = new File(address + File.separator + "config" + File.separator);
             if (mainFolder.isDirectory()) {
                 File[] files = mainFolder.listFiles();
                 if (files != null) {
@@ -1237,7 +1240,7 @@ public class MrlLauncher extends JFrame implements WindowListener {
                 return;
             }
             arguments.add("-c");
-            arguments.add(address + File.separator + "config"+File.separator + "kernel.cfg");
+            arguments.add(address + File.separator + "config" + File.separator + "kernel.cfg");
             arguments.add("--gis.map.dir=" + address + File.separator + "map");
             arguments.add("--nomenu");
             if (autoAgentCheckBox.isSelected()) {
@@ -1254,6 +1257,22 @@ public class MrlLauncher extends JFrame implements WindowListener {
                 startAgentsButton.setEnabled(true);
             }
             System.out.println("Kernel is ready.");
+
+            String hostField = hostTextField.getText();
+            String portField = null;
+            arguments.add(hostField != null ? hostField : defHostAddress);
+
+            try {
+                portField = Integer.valueOf(portTextField.getText()).toString();
+            } catch (NumberFormatException ignore) {
+            }
+            if (showViewerCheckBox.isSelected()) {
+                try {
+                    loadVisualDebugger(hostField, portField, kernelArgs);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
 //            mainTabbedPane.setSelectedIndex(2);
         }
     }
@@ -1350,123 +1369,127 @@ public class MrlLauncher extends JFrame implements WindowListener {
                 launchAgents(agentArgs, precompute);
 
                 //launch mrlViewer
-                if (showViewerCheckBox.isSelected()) {
-                    Config config = new Config();
-                    agentArgs = CommandLineOptions.processArgs(agentArgs, config);
-                    int port = config.getIntValue(Constants.KERNEL_PORT_NUMBER_KEY, Constants.DEFAULT_KERNEL_PORT_NUMBER);
-                    String host = config.getValue(Constants.KERNEL_HOST_NAME_KEY, Constants.DEFAULT_KERNEL_HOST_NAME);
-                    ComponentLauncher launcher = new TCPComponentLauncher(hostField, Integer.valueOf(portField), config);
-                    MrlViewer mrlViewer = new MrlViewer(true);
-                    launcher.connect(mrlViewer);
-
-                    JPanel topPanel = new JPanel();//mrlViewer.getTopPanel();
-                    JLabel timeLabel = mrlViewer.getTimeLabel();
-                    JLabel scoreLabel = mrlViewer.getScoreLabel();
-                    JLabel mapNameLabel = new JLabel("map address: " + mapAddressTextField.getText());
-                    MrlAnimatedWorldModelViewer mrlViewerPanel = mrlViewer.getViewerPanel();
-                    JScrollPane agentPropsScrollPane = new JScrollPane();
-                    JScrollPane layersScrollPane = new JScrollPane();
-                    JTable agentPropsTable = mrlViewer.getAgentPropPanel();
-                    JComboBox<StandardEntity> agentComboBox = mrlViewer.getAgentSelPanel();
-                    JTree mrlLayerConPanel = mrlViewer.getLayerConPanel();
-                    JPanel bottomPanel = mrlViewer.getBottomPanel();
-
-                    GroupLayout topPanelLayout = new GroupLayout(topPanel);
-                    topPanel.setLayout(topPanelLayout);
-                    topPanelLayout.setHorizontalGroup(
-                            topPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                    .addGroup(topPanelLayout.createSequentialGroup()
-                                            .addContainerGap()
-                                            .addComponent(scoreLabel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 170, Short.MAX_VALUE)
-                                            .addComponent(timeLabel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 170, Short.MAX_VALUE)
-                                            .addComponent(mapNameLabel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addContainerGap())
-                    );
-                    topPanelLayout.setVerticalGroup(
-                            topPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                    .addGroup(GroupLayout.Alignment.TRAILING, topPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                            .addComponent(scoreLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(timeLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(mapNameLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                    );
-
-                    GroupLayout mrlViewerPanelLayout = new GroupLayout(mrlViewerPanel);
-                    mrlViewerPanel.setLayout(mrlViewerPanelLayout);
-                    mrlViewerPanelLayout.setHorizontalGroup(
-                            mrlViewerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    );
-                    mrlViewerPanelLayout.setVerticalGroup(
-                            mrlViewerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    );
-
-                    GroupLayout mrlLayerConPanelLayout = new GroupLayout(mrlLayerConPanel);
-                    mrlLayerConPanel.setLayout(mrlLayerConPanelLayout);
-                    mrlLayerConPanelLayout.setHorizontalGroup(
-                            mrlLayerConPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    );
-                    mrlLayerConPanelLayout.setVerticalGroup(
-                            mrlLayerConPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    );
-
-                    agentPropsScrollPane.setViewportView(agentPropsTable);
-                    layersScrollPane.setViewportView(mrlLayerConPanel);
-
-                    GroupLayout bottomPanelPanelLayout = new GroupLayout(bottomPanel);
-                    bottomPanel.setLayout(bottomPanelPanelLayout);
-                    bottomPanelPanelLayout.setHorizontalGroup(
-                            bottomPanelPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    );
-                    bottomPanelPanelLayout.setVerticalGroup(
-                            bottomPanelPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    );
-
-                    GroupLayout viewerPanelLayout = new GroupLayout(viewerPanel);
-                    viewerPanel.setLayout(viewerPanelLayout);
-                    viewerPanelLayout.setHorizontalGroup(
-                            viewerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                    .addComponent(topPanel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(bottomPanel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addGroup(viewerPanelLayout.createSequentialGroup()
-                                            .addComponent(mrlViewerPanel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                            .addGroup(viewerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                                    .addComponent(layersScrollPane)
-                                                    .addComponent(agentPropsScrollPane, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                                                    .addComponent(agentComboBox, 0, 200, Short.MAX_VALUE)))
-                    );
-                    viewerPanelLayout.setVerticalGroup(
-                            viewerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                    .addGroup(viewerPanelLayout.createSequentialGroup()
-                                            .addComponent(topPanel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                            .addGroup(viewerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                                    .addComponent(mrlViewerPanel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                                    .addGroup(viewerPanelLayout.createSequentialGroup()
-                                                            .addGap(6, 6, 6)
-                                                            .addComponent(agentComboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                            .addComponent(agentPropsScrollPane, GroupLayout.PREFERRED_SIZE, 200, GroupLayout.PREFERRED_SIZE)
-                                                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                            .addComponent(layersScrollPane, GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)))
-                                            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                            .addComponent(bottomPanel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                    );
-
-                }
 
                 if (!autoAgentCheckBox.isSelected()) {
                     stepButton.setEnabled(true);
                     runButton.setEnabled(true);
                 }
                 agents_connected = true;
-                mainTabbedPane.setSelectedIndex(4);
+                if (showViewerCheckBox.isSelected()) {
+                    mainTabbedPane.setSelectedIndex(4);
+                } else {
+                    mainTabbedPane.setSelectedIndex(3);
+                }
             } catch (Exception e) {
                 //Logger.error(e.getMessage());
                 Logger.info("failed: " + e.getMessage());
             }
         }
+    }
+
+    private void loadVisualDebugger(String hostField, String portField, String[] agentArgs) throws IOException, ConfigException, InterruptedException, ConnectionException, ComponentConnectionException {
+        Config config = new Config();
+        agentArgs = CommandLineOptions.processArgs(agentArgs, config);
+        int port = config.getIntValue(Constants.KERNEL_PORT_NUMBER_KEY, Constants.DEFAULT_KERNEL_PORT_NUMBER);
+        String host = config.getValue(Constants.KERNEL_HOST_NAME_KEY, Constants.DEFAULT_KERNEL_HOST_NAME);
+        ComponentLauncher launcher = new TCPComponentLauncher(hostField, Integer.valueOf(portField), config);
+        MrlViewer mrlViewer = new MrlViewer(true);
+        launcher.connect(mrlViewer);
+
+        JPanel topPanel = new JPanel();//mrlViewer.getTopPanel();
+        JLabel timeLabel = mrlViewer.getTimeLabel();
+        JLabel scoreLabel = mrlViewer.getScoreLabel();
+        JLabel mapNameLabel = new JLabel("map address: " + mapAddressTextField.getText());
+        MrlAnimatedWorldModelViewer mrlViewerPanel = mrlViewer.getViewerPanel();
+        JScrollPane agentPropsScrollPane = new JScrollPane();
+        JScrollPane layersScrollPane = new JScrollPane();
+        JTable agentPropsTable = mrlViewer.getAgentPropPanel();
+        JComboBox<StandardEntity> agentComboBox = mrlViewer.getAgentSelPanel();
+        JTree mrlLayerConPanel = mrlViewer.getLayerConPanel();
+        JPanel bottomPanel = mrlViewer.getBottomPanel();
+
+        GroupLayout topPanelLayout = new GroupLayout(topPanel);
+        topPanel.setLayout(topPanelLayout);
+        topPanelLayout.setHorizontalGroup(
+                topPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(topPanelLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(scoreLabel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 170, Short.MAX_VALUE)
+                                .addComponent(timeLabel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 170, Short.MAX_VALUE)
+                                .addComponent(mapNameLabel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addContainerGap())
+        );
+        topPanelLayout.setVerticalGroup(
+                topPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(GroupLayout.Alignment.TRAILING, topPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                                .addComponent(scoreLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addComponent(timeLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addComponent(mapNameLabel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+        );
+
+        GroupLayout mrlViewerPanelLayout = new GroupLayout(mrlViewerPanel);
+        mrlViewerPanel.setLayout(mrlViewerPanelLayout);
+        mrlViewerPanelLayout.setHorizontalGroup(
+                mrlViewerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+        );
+        mrlViewerPanelLayout.setVerticalGroup(
+                mrlViewerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+        );
+
+        GroupLayout mrlLayerConPanelLayout = new GroupLayout(mrlLayerConPanel);
+        mrlLayerConPanel.setLayout(mrlLayerConPanelLayout);
+        mrlLayerConPanelLayout.setHorizontalGroup(
+                mrlLayerConPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+        );
+        mrlLayerConPanelLayout.setVerticalGroup(
+                mrlLayerConPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+        );
+
+        agentPropsScrollPane.setViewportView(agentPropsTable);
+        layersScrollPane.setViewportView(mrlLayerConPanel);
+
+        GroupLayout bottomPanelPanelLayout = new GroupLayout(bottomPanel);
+        bottomPanel.setLayout(bottomPanelPanelLayout);
+        bottomPanelPanelLayout.setHorizontalGroup(
+                bottomPanelPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+        );
+        bottomPanelPanelLayout.setVerticalGroup(
+                bottomPanelPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+        );
+
+        GroupLayout viewerPanelLayout = new GroupLayout(viewerPanel);
+        viewerPanel.setLayout(viewerPanelLayout);
+        viewerPanelLayout.setHorizontalGroup(
+                viewerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addComponent(topPanel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(bottomPanel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(viewerPanelLayout.createSequentialGroup()
+                                .addComponent(mrlViewerPanel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(viewerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
+                                        .addComponent(layersScrollPane)
+                                        .addComponent(agentPropsScrollPane, GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                                        .addComponent(agentComboBox, 0, 200, Short.MAX_VALUE)))
+        );
+        viewerPanelLayout.setVerticalGroup(
+                viewerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                        .addGroup(viewerPanelLayout.createSequentialGroup()
+                                .addComponent(topPanel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(viewerPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                                        .addComponent(mrlViewerPanel, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addGroup(viewerPanelLayout.createSequentialGroup()
+                                                .addGap(6, 6, 6)
+                                                .addComponent(agentComboBox, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(agentPropsScrollPane, GroupLayout.PREFERRED_SIZE, 200, GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                                .addComponent(layersScrollPane, GroupLayout.DEFAULT_SIZE, 200, Short.MAX_VALUE)))
+                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(bottomPanel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+        );
     }
 
 
@@ -1665,9 +1688,9 @@ public class MrlLauncher extends JFrame implements WindowListener {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                 MrlLauncher mrlLauncher = new MrlLauncher();
                 mrlLauncher.setFont(new Font("Vani", Font.BOLD, 12)); // NOI18N
-                mrlLauncher.setTitle("MrlStarter");
-//                    ImageIcon imageIcon = new ImageIcon("src/mrl/mrlPersonal/mrl.png");
-//                    mrlStartKernel.setIconImage(imageIcon.getImage());
+                mrlLauncher.setTitle("Control Panel");
+//                ImageIcon imageIcon = new ImageIcon("icon.png");
+//                mrlLauncher.setIconImage(imageIcon.getImage());
                 mrlLauncher.setExtendedState(MAXIMIZED_BOTH);
                 mrlLauncher.setVisible(true);
             } catch (Exception ex) {

@@ -40,6 +40,7 @@ import java.util.concurrent.Executors;
 import static rescuecore2.misc.java.JavaTools.instantiate;
 
 /**
+ * @author Mostafa
  * @author Mahdi
  */
 public class LaunchKernel {
