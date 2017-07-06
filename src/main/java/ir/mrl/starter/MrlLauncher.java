@@ -1,5 +1,6 @@
 package ir.mrl.starter;
 
+import com.mrl.debugger.LaunchMRLViewer;
 import com.mrl.debugger.MrlAnimatedWorldModelViewer;
 import com.mrl.debugger.MrlViewer;
 import gis2.ScenarioException;
@@ -31,6 +32,7 @@ import javax.swing.filechooser.FileFilter;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.rmi.AlreadyBoundException;
 import java.util.*;
 import java.util.List;
 
@@ -1400,6 +1402,11 @@ public class MrlLauncher extends JFrame implements WindowListener {
         JLabel timeLabel = mrlViewer.getTimeLabel();
         JLabel scoreLabel = mrlViewer.getScoreLabel();
         JLabel mapNameLabel = new JLabel("map address: " + mapAddressTextField.getText());
+        try {
+            LaunchMRLViewer.listenToAgents(mrlViewer);
+        } catch (AlreadyBoundException e) {
+            e.printStackTrace();
+        }
         MrlAnimatedWorldModelViewer mrlViewerPanel = mrlViewer.getViewerPanel();
         JScrollPane agentPropsScrollPane = new JScrollPane();
         JScrollPane layersScrollPane = new JScrollPane();
